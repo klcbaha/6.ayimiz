@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6. Ayımız Kutlu Olsun ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --netflix-red: #E50914;
+            --netflix-black: #141414;
+            --bg-color: #0f0f11;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent: #ff4b6e;
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            background: radial-gradient(circle at 50% 50%, rgba(229, 9, 20, 0.08) 0%, rgba(15, 15, 17, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 900px;
+            padding: 2rem;
+            z-index: 2;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ---------------- SECTION 1: NETFLIX PROFILE SELECTION ---------------- */
+        #profile-screen h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        .profiles-container {
+            display: flex;
+            gap: 2.5rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+        }
+
+        .profile-card:hover {
+            transform: scale(1.08);
+        }
+
+        .avatar-box {
+            width: 160px;
+            height: 160px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid transparent;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .profile-card:hover .avatar-box {
+            border-color: #ffffff;
+            box-shadow: 0 12px 30px rgba(229, 9, 20, 0.4);
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .profile-card:hover .profile-name {
+            color: var(--text-main);
+        }
+
+        /* ---------------- SECTION 2: QUIZ GATE ---------------- */
+        .quiz-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 33.3%;
+            background: linear-gradient(90deg, var(--netflix-red), #ff6b81);
+            transition: width 0.4s ease;
+        }
+
+        .quiz-question {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.8rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(4px);
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        /* ---------------- SECTION 3: MAIN DASHBOARD ---------------- */
+        .dashboard {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .hero-banner {
+            text-align: center;
+        }
+
+        .hero-banner h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-banner p {
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Counter */
+        .counter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .counter-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 1.2rem 0.5rem;
+            border-radius: 16px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .counter-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--netflix-red);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .counter-label {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.2rem;
+        }
+
+        /* Timeline / Months */
+        .timeline-section {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .timeline-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .month-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .month-card:hover {
+            border-color: var(--netflix-red);
+            transform: translateY(-4px);
+            background: rgba(229, 9, 20, 0.1);
+        }
+
+        .month-card h4 {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .month-card p {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        /* Photo Collage Section (9 Photos) */
+        .collage-section {
+            width: 100%;
+            max-width: 750px;
+        }
+
+        .collage-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .collage-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .collage-item {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            height: 200px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .collage-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .collage-item:hover {
+            border-color: var(--netflix-red);
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(229, 9, 20, 0.4);
+            z-index: 5;
+        }
+
+        .collage-item:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Letter Box */
+        .letter-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 700px;
+            backdrop-filter: blur(10px);
+            line-height: 1.8;
+            color: #e0e0e0;
+            font-size: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .letter-card p {
+            margin-bottom: 1rem;
+        }
+
+        .celebrate-btn {
+            background: linear-gradient(135deg, var(--netflix-red), #ff4b6e);
+            border: none;
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(229, 9, 20, 0.4);
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            margin-top: 1rem;
+        }
+
+        .celebrate-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(229, 9, 20, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #1a1a1e;
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        /* Music Button */
+        .music-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .music-btn:hover {
+            transform: scale(1.1);
+            background: rgba(229, 9, 20, 0.2);
+            border-color: var(--netflix-red);
+        }
+
+        @media (max-width: 600px) {
+            .months-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .counter-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .collage-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            #profile-screen h1 {
+                font-size: 1.8rem;
+            }
+            .avatar-box {
+                width: 130px;
+                height: 130px;
+            }
+            .collage-item {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUDIO ELEMENT -->
+    <audio id="bg-music" loop>
+        <source src="muzik.mp3" type="audio/mpeg">
+        Tarayıcınız ses oynatmayı desteklemiyor.
+    </audio>
+
+    <!-- MUSIC TOGGLE BUTTON -->
+    <button class="music-btn" id="music-toggle" onclick="toggleMusic()">🔊</button>
+
+    <!-- SCREEN 1: NETFLIX PROFILE SELECTION -->
+    <div id="profile-screen" class="screen active">
+        <h1>İlişkinin hangi kahramanısın?</h1>
+        <div class="profiles-container">
+            <!-- İREM PROFILE -->
+            <div class="profile-card" onclick="selectProfile('İrem')">
+                <div class="avatar-box">
+                    <img src="https://i.hizliresim.com/2eqpd2cs.jpg" alt="İrem">
+                </div>
+                <div class="profile-name">İrem</div>
+            </div>
+            <!-- BAHA PROFILE -->
+            <div class="profile-card" onclick="selectProfile('Baha')">
+                <div class="avatar-box">
+                    <img src="https://i.hizliresim.com/1cpzm4cd.jpg" alt="Baha">
+                </div>
+                <div class="profile-name">Baha</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: QUIZ GATE -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-card" id="quiz-box">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="quiz-progress"></div>
+            </div>
+            <div class="quiz-question" id="quiz-title">Soru yükleniyor...</div>
+            <div class="quiz-options" id="quiz-options"></div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: DASHBOARD -->
+    <div id="main-screen" class="screen">
+        <div class="dashboard">
+            <div class="hero-banner">
+                <h2>Hoş Geldin Sevgilim ❤️</h2>
+                <p>Bizim Yarım Yıllık Serüvenimiz (6. Ayımız)</p>
+            </div>
+
+            <!-- Live Counter -->
+            <div class="counter-grid">
+                <div class="counter-item">
+                    <div class="counter-number" id="days">180</div>
+                    <div class="counter-label">Gün</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-number" id="hours">00</div>
+                    <div class="counter-label">Saat</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-number" id="minutes">00</div>
+                    <div class="counter-label">Dakika</div>
+                </div>
+                <div class="counter-item">
+                    <div class="counter-number" id="seconds">00</div>
+                    <div class="counter-label">Saniye</div>
+                </div>
+            </div>
+
+            <!-- Months Milestones -->
+            <div class="timeline-section">
+                <h3>6 Ayın Yol Haritası</h3>
+                <div class="months-grid">
+                    <div class="month-card" onclick="openModal('1. Ay', 'İlk heyecanlar, saatlerce süren konuşmalar ve hayatıma girişin...')">
+                        <h4>1. Ay</h4>
+                        <p>Başlangıç ✨</p>
+                    </div>
+                    <div class="month-card" onclick="openModal('2. Ay', 'Birbirimizi daha iyi tanıdığımız, ortak yönlerimizi keşfettiğimiz günlerimiz.')">
+                        <h4>2. Ay</h4>
+                        <p>Alışma 🥰</p>
+                    </div>
+                    <div class="month-card" onclick="openModal('3. Ay', 'Sana olan özlemi sana gelerek bir nebze de olsun unuttuğum o güzel ay.')">
+                        <h4>3. Ay</h4>
+                        <p>Derinleşme 💖</p>
+                    </div>
+                    <div class="month-card" onclick="openModal('4. Ay', 'Artık her anımda aklıma ilk gelen kişi olduğun zamanlar.')">
+                        <h4>4. Ay</h4>
+                        <p>Bağlılık 🔒</p>
+                    </div>
+                    <div class="month-card" onclick="openModal('5. Ay', 'Her ne kadar zor geçse de sana ne kadar ihtiyacım olduğunu daha da iyi anladığım ay.')">
+                        <h4>5. Ay</h4>
+                        <p>Huzur 🌿</p>
+                    </div>
+                    <div class="month-card" onclick="openModal('6. Ay', 'Yarım yılı geride bıraktık! 1. yılımıza doğru emin adımlarla...')">
+                        <h4>6. Ay</h4>
+                        <p>Kutlama 🎉</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photo Collage Section (9 Photos) -->
+            <div class="collage-section">
+                <h3>En Güzel Anılarımız</h3>
+                <div class="collage-grid">
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/yppox911.jpg" alt="Anı 1">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/opawqzln.jpg" alt="Anı 2">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/8j3ugg0t.jpg" alt="Anı 3">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/km0mcdba.jpg" alt="Anı 4">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/pyh058vc.jpg" alt="Anı 5">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/5qzq47iq.jpg" alt="Anı 6">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/e8pi1yrf.jpg" alt="Anı 7">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/9f42o420.jpg" alt="Anı 8">
+                    </div>
+                    <div class="collage-item">
+                        <img src="https://i.hizliresim.com/gpfisdqv.jpg" alt="Anı 9">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Romantic Letter -->
+            <div class="letter-card">
+                <p><strong>Canım Sevgilim,</strong></p>
+                <p>Tam 6 aydır hayatımdasın ve zamanın nasıl bu kadar hızlı geçtiğini inan anlamadım. 180 gündür her günümü güzelleştirdiğin, yüzümü güldürdüğün ve bana huzur verdiğin için sana çok teşekkür ederim.</p>
+                <p>Birinci yılımızın yarısını geride bıraktık bile... Seninle büyümek, paylaşmak ve her anı anlamlı kılmak harika bir duygu. İyi ki varsın, 6. ayımız kutlu olsun!</p>
+                <p style="text-align: right; margin-bottom:0;"><strong>Seni Çok Seven, Baha ❤️</strong></p>
+            </div>
+
+            <button class="celebrate-btn" onclick="triggerConfetti()">Kutlamayı Başlat! 🥳</button>
+        </div>
+    </div>
+
+    <!-- Modal for Month Details -->
+    <div id="modal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modal-title" style="color: var(--accent); margin-bottom: 1rem;"></h3>
+            <p id="modal-text" style="color: var(--text-sub); line-height: 1.6;"></p>
+        </div>
+    </div>
+
+    <script>
+        // ---------------- MUSIC LOGIC ----------------
+        const bgMusic = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-toggle');
+        let musicStarted = false;
+
+        function toggleMusic() {
+            if (bgMusic.paused) {
+                bgMusic.volume = 0.4; // %40 Ses seviyesi
+                bgMusic.play();
+                musicBtn.innerText = '🔊';
+            } else {
+                bgMusic.pause();
+                musicBtn.innerText = '🔇';
+            }
+        }
+
+        // ---------------- QUIZ QUESTIONS DATA ----------------
+        const quizQuestions = [
+            {
+                question: "İlk datetimizi nerede yaptık?",
+                options: ["Coffee and Study", "Botanik", "Mountain"],
+                answer: 0
+            },
+            {
+                question: "Birlikteyken en sevdiğimiz aktivite?",
+                options: ["Her şey ❤️"],
+                answer: 0
+            },
+            {
+                question: "Gelecekteki en büyük hayalimiz nedir?",
+                options: ["Dünyayı gezmek", "Sahil kasabasına yerleşmek", "Hep böyle mutlu olmak"],
+                answer: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+
+        // Navigation
+        function selectProfile(name) {
+            // Profil seçildiğinde müziği otomatik başlatmayı dene
+            if (!musicStarted) {
+                bgMusic.volume = 0.4;
+                bgMusic.play().catch(e => console.log("Otomatik oynatma engellendi, manuel başlatılması gerekiyor."));
+                musicStarted = true;
+            }
+
+            switchScreen('profile-screen', 'quiz-screen');
+            loadQuestion();
+        }
+
+        function switchScreen(fromId, toId) {
+            const fromEl = document.getElementById(fromId);
+            const toEl = document.getElementById(toId);
+            
+            fromEl.classList.remove('active');
+            setTimeout(() => {
+                fromEl.style.display = 'none';
+                toEl.style.display = 'flex';
+                setTimeout(() => toEl.classList.add('active'), 50);
+            }, 600);
+        }
+
+        // Quiz Logic
+        function loadQuestion() {
+            const q = quizQuestions[currentQuestion];
+            document.getElementById('quiz-title').innerText = q.question;
+            document.getElementById('quiz-progress').style.width = ((currentQuestion + 1) / quizQuestions.length * 100) + '%';
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIdx) {
+            if (selectedIdx === quizQuestions[currentQuestion].answer) {
+                currentQuestion++;
+                if (currentQuestion < quizQuestions.length) {
+                    loadQuestion();
+                } else {
+                    switchScreen('quiz-screen', 'main-screen');
+                    startCounter();
+                    triggerConfetti();
+                }
+            } else {
+                const quizBox = document.getElementById('quiz-box');
+                quizBox.classList.add('shake');
+                setTimeout(() => quizBox.classList.remove('shake'), 400);
+            }
+        }
+
+        // Timer Logic (6 Months Ago default setting)
+        function startCounter() {
+            const startDate = new Date();
+            startDate.setMonth(startDate.getMonth() - 6);
+
+            function update() {
+                const now = new Date();
+                const diff = now - startDate;
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const minutes = Math.floor((diff / 1000 / 60) % 60);
+                const seconds = Math.floor((diff / 1000) % 60);
+
+                document.getElementById('days').innerText = days;
+                document.getElementById('hours').innerText = hours < 10 ? '0' + hours : hours;
+                document.getElementById('minutes').innerText = minutes < 10 ? '0' + minutes : minutes;
+                document.getElementById('seconds').innerText = seconds < 10 ? '0' + seconds : seconds;
+            }
+
+            update();
+            setInterval(update, 1000);
+        }
+
+        // Confetti Effect
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Modal Controls
+        function openModal(title, text) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
